@@ -45,7 +45,7 @@
             let port = try Kernel.IOCP.create()
             defer { Kernel.IOCP.close(port) }
 
-            let expectedKey = Kernel.IOCP.Completion.Key(0xDEAD_BEEF)
+            let expectedKey = Kernel.IOCP.Completion.Key(UInt(0xDEAD_BEEF))
             try Kernel.IOCP.post(port, key: expectedKey)
 
             var entries = [OVERLAPPED_ENTRY](repeating: OVERLAPPED_ENTRY(), count: 1)
