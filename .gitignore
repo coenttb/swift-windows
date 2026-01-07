@@ -1,7 +1,40 @@
-.build/
-.swiftpm/
-*.xcodeproj/
-xcuserdata/
-DerivedData/
-.DS_Store
+*~
+
 Package.resolved
+DerivedData/
+Thumbs.db
+
+# Dot files/directories (opt-in only)
+/.*
+!/.github
+!/.gitignore
+!/.spi.yml
+!/.swift-format
+!/.swiftformat
+!/.swiftlint.yml
+
+# Top-level entries (opt-in only)
+# First ignore all, then whitelist specific folders and files
+/*
+!/Sources/
+!/Tests/
+!/.github/
+!/Package.swift
+!/LICENSE.md
+
+# Documentation (opt-in for whitelisted .md files and .docc catalogs only)
+# Blocks all .md files by default to prevent AI-generated content from being committed
+*.md
+!README.md
+!LICENSE.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!CODE_OF_CONDUCT.md
+!SECURITY.md
+!**/*.docc/**/*.md
+
+*.pdf
+
+
+# SwiftLint Remote Config Cache
+.swiftlint/RemoteConfigCache
