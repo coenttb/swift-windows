@@ -40,7 +40,7 @@ let package = Package(
             name: "Windows Kernel Tests",
             dependencies: [
                 "Windows Kernel",
-                .product(name: "Kernel Test Support", package: "swift-kernel-primitives"),
+                .product(name: "Kernel Primitives Test Support", package: "swift-kernel-primitives"),
                 .product(name: "StandardsTestSupport", package: "swift-standards")
             ],
             path: "Tests/Windows Kernel Tests"
