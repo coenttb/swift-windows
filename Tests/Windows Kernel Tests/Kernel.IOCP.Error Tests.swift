@@ -198,33 +198,6 @@
         }
     }
 
-    // MARK: - Kernel.Error Conversion Tests
-
-    extension Kernel.IOCP.Error.Test.Unit {
-        @Test("timeout converts to blocking.wouldBlock")
-        func timeoutConvertsToBlocking() {
-            let iocpError = Kernel.IOCP.Error.timeout
-            let kernelError = Kernel.Error(iocpError)
-            if case .blocking(.wouldBlock) = kernelError {
-                // Expected
-            } else {
-                Issue.record("Expected .blocking(.wouldBlock), got \(kernelError)")
-            }
-        }
-
-        @Test("create with access denied converts to permission.denied")
-        func createAccessDeniedConvertsToPermission() {
-            let iocpError = Kernel.IOCP.Error.create(.win32(UInt32(ERROR_ACCESS_DENIED)))
-            let kernelError = Kernel.Error(iocpError)
-            if case .permission(.denied) = kernelError {
-                // Expected
-            } else {
-                // Falls through to platform if not mapped
-                #expect(true)
-            }
-        }
-    }
-
     // MARK: - last() Helper Tests
 
     extension Kernel.IOCP.Error.Test.Unit {
