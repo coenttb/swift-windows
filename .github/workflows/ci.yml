@@ -35,7 +35,7 @@ jobs:
         with:
           path: .build
           key: windows-swift62-spm-v3-${{ hashFiles('Package.swift', 'Package@*.swift') }}
-          restore-keys: windows-swift62-spm-
+          restore-keys: windows-swift62-spm-v3-
 
       # Note: swift test builds automatically
       # Release mode + -gnone works around Swift 6.2.1 Windows compiler crash in debug info verifier
