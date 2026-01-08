@@ -23,10 +23,15 @@ public import Kernel_Primitives
         ///
         /// ```swift
         /// // Single completion
-        /// let (bytes, key, overlapped) = try Kernel.IO.Completion.Port.Dequeue.single(
-        ///     port,
-        ///     timeout: INFINITE
-        /// )
+        /// let item = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: INFINITE)
+        /// switch item.status {
+        /// case .ok:
+        ///     // I/O completed successfully
+        ///     print("Transferred \(item.bytes) bytes")
+        /// case .operationError(let code):
+        ///     // I/O failed but was dequeued
+        ///     print("Operation failed: \(code)")
+        /// }
         ///
         /// // Batch completion (more efficient)
         /// var entries = [OVERLAPPED_ENTRY](repeating: .init(), count: 64)
@@ -45,6 +50,53 @@ public import Kernel_Primitives
         }
     }
 
+    // MARK: - Status
+
+    extension Kernel.IO.Completion.Port.Dequeue {
+        /// Status of a completed I/O operation.
+        @frozen
+        public enum Status: Sendable, Equatable {
+            /// The I/O operation completed successfully.
+            case ok
+
+            /// The I/O operation completed with an error.
+            case operationError(Kernel.Error.Code)
+        }
+    }
+
+    // MARK: - Item
+
+    extension Kernel.IO.Completion.Port.Dequeue {
+        /// A dequeued I/O completion.
+        @frozen
+        public struct Item: Sendable {
+            /// Number of bytes transferred.
+            public let bytes: UInt32
+
+            /// Application-defined completion key.
+            public let key: Kernel.IO.Completion.Port.Key
+
+            /// Pointer to the OVERLAPPED structure associated with the operation.
+            public let overlapped: UnsafeMutablePointer<OVERLAPPED>
+
+            /// Status of the completed I/O operation.
+            public let status: Status
+
+            @inlinable
+            public init(
+                bytes: UInt32,
+                key: Kernel.IO.Completion.Port.Key,
+                overlapped: UnsafeMutablePointer<OVERLAPPED>,
+                status: Status
+            ) {
+                self.bytes = bytes
+                self.key = key
+                self.overlapped = overlapped
+                self.status = status
+            }
+        }
+    }
+
     // MARK: - Operations
 
     extension Kernel.IO.Completion.Port.Dequeue {
@@ -53,18 +105,19 @@ public import Kernel_Primitives
         /// - Parameters:
         ///   - port: The port handle.
         ///   - timeout: Timeout in milliseconds (`INFINITE` = 0xFFFFFFFF).
-        /// - Returns: Tuple of (bytes transferred, completion key, overlapped pointer).
-        /// - Throws: `Error.timeout` on timeout, `Error.dequeue` on failure.
+        /// - Returns: The dequeued completion item.
+        /// - Throws: `.timeout` on timeout, `.dequeue` only on actual port failure
+        ///   (`overlapped == nil`). Operation failures are returned via `Item.status`.
         @inlinable
         public static func single(
             _ port: Kernel.Descriptor,
             timeout: DWORD
-        ) throws(Kernel.IO.Completion.Port.Error) -> (bytes: DWORD, key: Kernel.IO.Completion.Port.Key, overlapped: LPOVERLAPPED?) {
+        ) throws(Kernel.IO.Completion.Port.Error) -> Item {
             var bytes: DWORD = 0
             var key: ULONG_PTR = 0
             var overlapped: LPOVERLAPPED? = nil
 
-            let result = GetQueuedCompletionStatus(
+            let ok = GetQueuedCompletionStatus(
                 port.rawValue,
                 &bytes,
                 &key,
@@ -72,15 +125,38 @@ public import Kernel_Primitives
                 timeout
             )
 
-            if !result {
-                let error = GetLastError()
-                if error == WAIT_TIMEOUT {
-                    throw .timeout
+            if ok {
+                guard let ov = overlapped else {
+                    // Should be impossible if Win32 honors its contract.
+                    throw .dequeue(.win32(UInt32(ERROR_INVALID_DATA)))
                 }
-                throw .dequeue(.win32(UInt32(error)))
+
+                return Item(
+                    bytes: UInt32(bytes),
+                    key: Kernel.IO.Completion.Port.Key(rawValue: key),
+                    overlapped: ov,
+                    status: .ok
+                )
             }
 
-            return (bytes, Kernel.IO.Completion.Port.Key(rawValue: key), overlapped)
+            let error = GetLastError()
+
+            if error == WAIT_TIMEOUT {
+                throw .timeout
+            }
+
+            if let ov = overlapped {
+                // Correct: dequeued completion of a FAILED I/O operation
+                return Item(
+                    bytes: UInt32(bytes),
+                    key: Kernel.IO.Completion.Port.Key(rawValue: key),
+                    overlapped: ov,
+                    status: .operationError(.win32(error))
+                )
+            }
+
+            // Correct: true port-level failure
+            throw .dequeue(.win32(error))
         }
 
         /// Dequeues multiple completion packets (batch).
