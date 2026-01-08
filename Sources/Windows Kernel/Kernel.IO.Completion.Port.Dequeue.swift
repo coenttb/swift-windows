@@ -59,8 +59,8 @@ public import Kernel_Primitives
             /// The I/O operation completed successfully.
             case ok
 
-            /// The I/O operation completed with an error.
-            case operationError(Kernel.Error.Code)
+            /// The I/O operation completed with a platform error.
+            case platform(Kernel.Error)
         }
     }
 
@@ -154,7 +154,7 @@ public import Kernel_Primitives
                     bytes: UInt32(bytes),
                     key: Kernel.IO.Completion.Port.Key(rawValue: key),
                     overlapped: ov,
-                    status: .operationError(.win32(error))
+                    status: .platform(Kernel.Error(.win32(error)))
                 )
             }
 
