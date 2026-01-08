@@ -60,7 +60,7 @@ public import Kernel_Primitives
             case ok
 
             /// The I/O operation completed with a platform error.
-            case platform(Kernel.Error.Code)
+            case platform(Kernel.Error)
         }
     }
 
@@ -154,7 +154,7 @@ public import Kernel_Primitives
                     bytes: UInt32(bytes),
                     key: Kernel.IO.Completion.Port.Key(rawValue: key),
                     overlapped: ov,
-                    status: .platform(.win32(error))
+                    status: .platform(Kernel.Error(code: .win32(error)))
                 )
             }
 
