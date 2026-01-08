@@ -69,7 +69,7 @@ public import Kernel_Primitives
     extension Kernel.IO.Completion.Port.Dequeue {
         /// A dequeued I/O completion.
         @frozen
-        public struct Item: Sendable {
+        public struct Item: @unchecked Sendable {
             /// Number of bytes transferred.
             public let bytes: UInt32
 
