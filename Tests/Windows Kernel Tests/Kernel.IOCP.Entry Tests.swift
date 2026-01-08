@@ -107,7 +107,7 @@
             let port = try Kernel.IOCP.create()
             defer { Kernel.IOCP.close(port) }
 
-            let testCases: [(bytes: DWORD, key: UInt)] = [
+            let testCases: [(bytes: DWORD, key: ULONG_PTR)] = [
                 (100, 1),
                 (200, 2),
                 (300, 3),
@@ -185,7 +185,7 @@
             defer { Kernel.IOCP.close(port) }
 
             // Post with distinct patterns
-            for i: UInt in 0..<5 {
+            for i: ULONG_PTR in 0..<5 {
                 try Kernel.IOCP.post(
                     port,
                     bytesTransferred: DWORD(i * 111),
