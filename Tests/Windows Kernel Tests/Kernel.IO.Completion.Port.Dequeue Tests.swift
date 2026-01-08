@@ -61,7 +61,21 @@
 
             #expect(item.bytes == 42)
             #expect(item.key == .init(rawValue: 0xBEEF))
+            #expect(item.overlapped != nil)
             #expect(item.overlapped == ov)
+            #expect(item.status == .ok)
+        }
+
+        @Test("Item can have nil overlapped")
+        func itemNilOverlapped() {
+            let item = Kernel.IO.Completion.Port.Dequeue.Item(
+                bytes: 0,
+                key: .init(rawValue: 0),
+                overlapped: nil,
+                status: .ok
+            )
+
+            #expect(item.overlapped == nil)
             #expect(item.status == .ok)
         }
 
@@ -101,8 +115,8 @@
             }
         }
 
-        @Test("single returns .ok for posted completion")
-        func singlePostedCompletion() throws {
+        @Test("single returns .ok for posted completion with overlapped")
+        func singlePostedCompletionWithOverlapped() throws {
             let port = try Kernel.IO.Completion.Port.create()
             defer { Kernel.IO.Completion.Port.close(port) }
 
@@ -119,6 +133,20 @@
             #expect(item.bytes == 7)
             #expect(item.key == .init(rawValue: 1))
             #expect(item.overlapped == ov)
+            #expect(item.status == .ok)
+        }
+
+        @Test("single returns .ok for posted completion without overlapped")
+        func singlePostedCompletionWithoutOverlapped() throws {
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
+
+            try Kernel.IO.Completion.Port.post(port, bytes: 42, key: .init(rawValue: 123))
+
+            let item = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 1_000)
+            #expect(item.bytes == 42)
+            #expect(item.key == .init(rawValue: 123))
+            #expect(item.overlapped == nil)
             #expect(item.status == .ok)
         }
     }

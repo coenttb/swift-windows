@@ -82,7 +82,10 @@ public import Kernel_Primitives
             public let key: Kernel.IO.Completion.Port.Key
 
             /// Pointer to the OVERLAPPED structure associated with the operation.
-            public let overlapped: UnsafeMutablePointer<OVERLAPPED>
+            ///
+            /// May be `nil` for synthetic completions posted via `PostQueuedCompletionStatus`
+            /// without an associated overlapped structure.
+            public let overlapped: UnsafeMutablePointer<OVERLAPPED>?
 
             /// Status of the completed I/O operation.
             public let status: Status
@@ -91,7 +94,7 @@ public import Kernel_Primitives
             public init(
                 bytes: UInt32,
                 key: Kernel.IO.Completion.Port.Key,
-                overlapped: UnsafeMutablePointer<OVERLAPPED>,
+                overlapped: UnsafeMutablePointer<OVERLAPPED>?,
                 status: Status
             ) {
                 self.bytes = bytes
@@ -111,8 +114,8 @@ public import Kernel_Primitives
         ///   - port: The port handle.
         ///   - timeout: Timeout in milliseconds (`INFINITE` = 0xFFFFFFFF).
         /// - Returns: The dequeued completion item.
-        /// - Throws: `.timeout` on timeout, `.dequeue` only on actual port failure
-        ///   (`overlapped == nil`). Operation failures are returned via `Item.status`.
+        /// - Throws: `.timeout` on timeout, `.dequeue` only on actual port failure.
+        ///   Operation failures are returned via `Item.status`.
         @inlinable
         public static func single(
             _ port: Kernel.Descriptor,
@@ -131,15 +134,10 @@ public import Kernel_Primitives
             )
 
             if ok {
-                guard let ov = overlapped else {
-                    // Should be impossible if Win32 honors its contract.
-                    throw .dequeue(.win32(UInt32(ERROR_INVALID_DATA)))
-                }
-
                 return Item(
                     bytes: UInt32(bytes),
                     key: Kernel.IO.Completion.Port.Key(rawValue: key),
-                    overlapped: ov,
+                    overlapped: overlapped,
                     status: .ok
                 )
             }
