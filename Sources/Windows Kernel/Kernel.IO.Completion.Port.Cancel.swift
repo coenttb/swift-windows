@@ -88,7 +88,7 @@ public import Kernel_Primitives
 
     extension Kernel.IO.Completion.Port.Cancel {
         /// Result of cancelling a specific pending I/O operation.
-        public struct Pending: Sendable {
+        public struct Pending: @unchecked Sendable {
             @usableFromInline
             let descriptor: Kernel.Descriptor
 
