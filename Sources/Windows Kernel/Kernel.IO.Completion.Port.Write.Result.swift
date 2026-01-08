@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-public import Kernel_Primitives
+    public import Kernel_Primitives
 
     extension Kernel.IO.Completion.Port.Write {
         /// Result of initiating an overlapped write operation.

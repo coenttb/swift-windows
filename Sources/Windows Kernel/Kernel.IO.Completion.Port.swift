@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-public import Kernel_Primitives
+    public import Kernel_Primitives
     public import WinSDK
 
     extension Kernel.IO.Completion {

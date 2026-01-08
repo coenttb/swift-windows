@@ -10,7 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 #if os(Windows)
-public import Kernel_Primitives
+    public import Kernel_Primitives
 
     extension Kernel.IO.Completion.Port {
         /// Namespace for write operation types.

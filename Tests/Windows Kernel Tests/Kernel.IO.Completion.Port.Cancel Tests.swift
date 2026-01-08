@@ -130,10 +130,11 @@
 
             // Call pending.status multiple times - should be safe
             for _ in 0..<3 {
-                _ = Kernel.IO.Completion.Port.Cancel.pending(
-                    Kernel.Descriptor.invalid,
-                    overlapped: &overlapped
-                ).status
+                _ =
+                    Kernel.IO.Completion.Port.Cancel.pending(
+                        Kernel.Descriptor.invalid,
+                        overlapped: &overlapped
+                    ).status
             }
         }
 
