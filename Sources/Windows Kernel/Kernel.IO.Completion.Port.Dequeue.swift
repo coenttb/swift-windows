@@ -28,7 +28,7 @@ public import Kernel_Primitives
         /// case .ok:
         ///     // I/O completed successfully
         ///     print("Transferred \(item.bytes) bytes")
-        /// case .operationError(let code):
+        /// case .platform(let code):
         ///     // I/O failed but was dequeued
         ///     print("Operation failed: \(code)")
         /// }
@@ -60,7 +60,7 @@ public import Kernel_Primitives
             case ok
 
             /// The I/O operation completed with a platform error.
-            case platform(Kernel.Error)
+            case platform(Kernel.Error.Code)
         }
     }
 
@@ -154,7 +154,7 @@ public import Kernel_Primitives
                     bytes: UInt32(bytes),
                     key: Kernel.IO.Completion.Port.Key(rawValue: key),
                     overlapped: ov,
-                    status: .platform(Kernel.Error(.win32(error)))
+                    status: .platform(.win32(error))
                 )
             }
 

@@ -37,7 +37,7 @@
         @Test("Status type exists with ok and platform cases")
         func statusType() {
             let ok: Kernel.IO.Completion.Port.Dequeue.Status = .ok
-            let error: Kernel.IO.Completion.Port.Dequeue.Status = .platform(Kernel.Error(.win32(0)))
+            let error: Kernel.IO.Completion.Port.Dequeue.Status = .platform(.win32(0))
 
             #expect(ok == .ok)
             #expect(error != .ok)
@@ -92,11 +92,11 @@
                 bytes: 0,
                 key: .init(rawValue: 0),
                 overlapped: ov,
-                status: .platform(Kernel.Error(.win32(5)))
+                status: .platform(.win32(5))
             )
 
-            if case .platform(let error) = item.status {
-                #expect(error.code == .win32(5))
+            if case .platform(let code) = item.status {
+                #expect(code == .win32(5))
             } else {
                 #expect(Bool(false), "Expected platform error status")
             }
