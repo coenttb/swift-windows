@@ -13,8 +13,8 @@ public import Kernel_Primitives
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.IOCP {
-        /// Operations for retrieving completed I/O from an IOCP.
+    extension Kernel.IO.Completion.Port {
+        /// Operations for retrieving completed I/O from a port.
         ///
         /// Provides both single-entry and batch dequeue operations. Batch
         /// dequeuing is more efficient when multiple completions are expected.
@@ -23,7 +23,7 @@ public import Kernel_Primitives
         ///
         /// ```swift
         /// // Single completion
-        /// let (bytes, key, overlapped) = try Kernel.IOCP.Dequeue.single(
+        /// let (bytes, key, overlapped) = try Kernel.IO.Completion.Port.Dequeue.single(
         ///     port,
         ///     timeout: INFINITE
         /// )
@@ -31,15 +31,15 @@ public import Kernel_Primitives
         /// // Batch completion (more efficient)
         /// var entries = [OVERLAPPED_ENTRY](repeating: .init(), count: 64)
         /// let count = try entries.withUnsafeMutableBufferPointer { buffer in
-        ///     try Kernel.IOCP.Dequeue.batch(port, entries: buffer, timeout: 100)
+        ///     try Kernel.IO.Completion.Port.Dequeue.batch(port, entries: buffer, timeout: 100)
         /// }
         /// ```
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP``
-        /// - ``Kernel/IOCP/Entry``
-        /// - ``Kernel/IOCP/Completion/Key``
+        /// - ``Kernel/IO/Completion/Port``
+        /// - ``Kernel/IO/Completion/Port/Entry``
+        /// - ``Kernel/IO/Completion/Port/Key``
         public enum Dequeue {
 
         }
@@ -47,11 +47,11 @@ public import Kernel_Primitives
 
     // MARK: - Operations
 
-    extension Kernel.IOCP.Dequeue {
+    extension Kernel.IO.Completion.Port.Dequeue {
         /// Dequeues a single completion packet.
         ///
         /// - Parameters:
-        ///   - port: The IOCP handle.
+        ///   - port: The port handle.
         ///   - timeout: Timeout in milliseconds (`INFINITE` = 0xFFFFFFFF).
         /// - Returns: Tuple of (bytes transferred, completion key, overlapped pointer).
         /// - Throws: `Error.timeout` on timeout, `Error.dequeue` on failure.
@@ -59,7 +59,7 @@ public import Kernel_Primitives
         public static func single(
             _ port: Kernel.Descriptor,
             timeout: DWORD
-        ) throws(Kernel.IOCP.Error) -> (bytesTransferred: DWORD, key: Kernel.IOCP.Completion.Key, overlapped: LPOVERLAPPED?) {
+        ) throws(Kernel.IO.Completion.Port.Error) -> (bytes: DWORD, key: Kernel.IO.Completion.Port.Key, overlapped: LPOVERLAPPED?) {
             var bytes: DWORD = 0
             var key: ULONG_PTR = 0
             var overlapped: LPOVERLAPPED? = nil
@@ -80,7 +80,7 @@ public import Kernel_Primitives
                 throw .dequeue(.win32(UInt32(error)))
             }
 
-            return (bytes, Kernel.IOCP.Completion.Key(rawValue: key), overlapped)
+            return (bytes, Kernel.IO.Completion.Port.Key(rawValue: key), overlapped)
         }
 
         /// Dequeues multiple completion packets (batch).
@@ -89,7 +89,7 @@ public import Kernel_Primitives
         /// completions are expected.
         ///
         /// - Parameters:
-        ///   - port: The IOCP handle.
+        ///   - port: The port handle.
         ///   - entries: Buffer for completion entries.
         ///   - timeout: Timeout in milliseconds.
         /// - Returns: Number of entries dequeued (0 on timeout).
@@ -99,13 +99,13 @@ public import Kernel_Primitives
             _ port: Kernel.Descriptor,
             entries: UnsafeMutableBufferPointer<OVERLAPPED_ENTRY>,
             timeout: DWORD
-        ) throws(Kernel.IOCP.Error) -> Int {
-            guard let baseAddress = entries.baseAddress else { return 0 }
+        ) throws(Kernel.IO.Completion.Port.Error) -> Int {
+            guard let base = entries.baseAddress else { return 0 }
 
             var removed: ULONG = 0
             let result = GetQueuedCompletionStatusEx(
                 port.rawValue,
-                baseAddress,
+                base,
                 ULONG(entries.count),
                 &removed,
                 timeout,

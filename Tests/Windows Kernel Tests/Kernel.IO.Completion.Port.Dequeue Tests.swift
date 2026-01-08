@@ -17,30 +17,21 @@
     @testable import Windows_Kernel
     import Kernel_Primitives
 
-    extension Kernel.IOCP.Completion {
+    extension Kernel.IO.Completion.Port.Dequeue {
         #TestSuites
     }
 
     // MARK: - Unit Tests
 
-    extension Kernel.IOCP.Completion.Test.Unit {
-        @Test("Completion namespace exists")
+    extension Kernel.IO.Completion.Port.Dequeue.Test.Unit {
+        @Test("Dequeue namespace exists")
         func namespaceExists() {
-            _ = Kernel.IOCP.Completion.self
+            _ = Kernel.IO.Completion.Port.Dequeue.self
         }
 
-        @Test("Completion is an enum")
+        @Test("Dequeue is an enum")
         func isEnum() {
-            let _: Kernel.IOCP.Completion.Type = Kernel.IOCP.Completion.self
-        }
-    }
-
-    // MARK: - Nested Types
-
-    extension Kernel.IOCP.Completion.Test.Unit {
-        @Test("Completion.Key type exists")
-        func keyTypeExists() {
-            let _: Kernel.IOCP.Completion.Key.Type = Kernel.IOCP.Completion.Key.self
+            let _: Kernel.IO.Completion.Port.Dequeue.Type = Kernel.IO.Completion.Port.Dequeue.self
         }
     }
 

@@ -13,7 +13,7 @@ public import Kernel_Primitives
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.IOCP {
+    extension Kernel.IO.Completion.Port {
         /// Tracks the state of an asynchronous I/O operation on Windows.
         ///
         /// Every asynchronous I/O operation requires an `OVERLAPPED` structure
@@ -24,19 +24,19 @@ public import Kernel_Primitives
         /// ## Usage
         ///
         /// ```swift
-        /// var overlapped = Kernel.IOCP.Overlapped()
-        /// overlapped.offset = filePosition
+        /// var overlapped = Kernel.IO.Completion.Port.Overlapped()
+        /// overlapped.offset = position
         ///
         /// // Start async read (overlapped must stay alive until completion)
-        /// try Kernel.IOCP.read(
+        /// try Kernel.IO.Completion.Port.read(
         ///     handle,
         ///     buffer: buffer,
         ///     overlapped: &overlapped
         /// )
         ///
         /// // Later, retrieve completion
-        /// let entry = try Kernel.IOCP.dequeue(port, timeout: .infinite)
-        /// let bytesRead = entry.bytes.transferred
+        /// let entry = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: .infinite)
+        /// let count = entry.bytes.transferred
         /// ```
         ///
         /// ## Container-Of Pattern
@@ -46,7 +46,7 @@ public import Kernel_Primitives
         ///
         /// ```swift
         /// struct MyOperation {
-        ///     var overlapped: Kernel.IOCP.Overlapped
+        ///     var overlapped: Kernel.IO.Completion.Port.Overlapped
         ///     var buffer: [UInt8]
         ///     var callback: (Int) -> Void
         /// }
@@ -54,8 +54,8 @@ public import Kernel_Primitives
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP``
-        /// - ``Kernel/IOCP/Entry``
+        /// - ``Kernel/IO/Completion/Port``
+        /// - ``Kernel/IO/Completion/Port/Entry``
         public struct Overlapped: @unchecked Sendable {
             /// The underlying Windows OVERLAPPED structure.
             @usableFromInline
@@ -71,7 +71,7 @@ public import Kernel_Primitives
 
     // MARK: - Accessors
 
-    extension Kernel.IOCP.Overlapped {
+    extension Kernel.IO.Completion.Port.Overlapped {
         /// The 64-bit file offset for positioned I/O.
         @inlinable
         public var offset: Int64 {

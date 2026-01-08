@@ -13,10 +13,10 @@ public import Kernel_Primitives
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.IOCP {
+    extension Kernel.IO.Completion.Port {
         /// Errors from I/O completion port operations.
         ///
-        /// Low-level errors from Windows IOCP operations. Each case wraps
+        /// Low-level errors from Windows I/O completion port operations. Each case wraps
         /// the underlying `Kernel.Error.Code` (Win32 error code) for
         /// platform-specific details. Convert to `Kernel.Error` for
         /// semantic error handling.
@@ -25,8 +25,8 @@ public import Kernel_Primitives
         ///
         /// ```swift
         /// do {
-        ///     let port = try Kernel.IOCP.create()
-        /// } catch let error as Kernel.IOCP.Error {
+        ///     let port = try Kernel.IO.Completion.Port.create()
+        /// } catch let error as Kernel.IO.Completion.Port.Error {
         ///     switch error {
         ///     case .create(let code):
         ///         print("CreateIoCompletionPort failed: \(code)")
@@ -40,7 +40,7 @@ public import Kernel_Primitives
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP``
+        /// - ``Kernel/IO/Completion/Port``
         /// - ``Kernel/Error``
         /// - ``Kernel/Error/Code``
         public enum Error: Swift.Error, Sendable, Equatable, Hashable {
@@ -50,7 +50,7 @@ public import Kernel_Primitives
             /// Common causes: system resource exhaustion.
             case create(Kernel.Error.Code)
 
-            /// Failed to associate a handle with the IOCP.
+            /// Failed to associate a handle with the port.
             ///
             /// Returned by `CreateIoCompletionPort` when associating a handle.
             /// Common causes: handle already associated, invalid handle.
@@ -96,7 +96,7 @@ public import Kernel_Primitives
 
     // MARK: - CustomStringConvertible
 
-    extension Kernel.IOCP.Error: CustomStringConvertible {
+    extension Kernel.IO.Completion.Port.Error: CustomStringConvertible {
         public var description: String {
             switch self {
             case .create(let code):
@@ -121,7 +121,7 @@ public import Kernel_Primitives
 
     // MARK: - Last Error Helper
 
-    extension Kernel.IOCP.Error {
+    extension Kernel.IO.Completion.Port.Error {
         /// Gets the last Windows error code.
         ///
         /// Exposed so swift-io doesn't need to import WinSDK.
@@ -133,45 +133,60 @@ public import Kernel_Primitives
 
     // MARK: - Windows Error Code Constants
 
-    extension Kernel.IOCP.Error {
-        /// The I/O operation has been started but not yet completed.
-        ///
-        /// This is the normal return code for an asynchronous operation
-        /// that was successfully queued. A completion packet will be
-        /// posted to the IOCP when the operation finishes.
-        ///
-        /// - Win32: `ERROR_IO_PENDING`
-        public static let ioPending: UInt32 = UInt32(ERROR_IO_PENDING)
+    extension Kernel.IO.Completion.Port.Error {
+        /// Windows error code constants.
+        public enum Code {
+            /// I/O-related error codes.
+            public enum IO {
+                /// The I/O operation has been started but not yet completed.
+                ///
+                /// This is the normal return code for an asynchronous operation
+                /// that was successfully queued. A completion packet will be
+                /// posted to the port when the operation finishes.
+                ///
+                /// - Win32: `ERROR_IO_PENDING`
+                public static let pending: UInt32 = UInt32(ERROR_IO_PENDING)
+            }
 
-        /// The I/O operation was aborted due to cancellation.
-        ///
-        /// Returned when an overlapped operation is cancelled via
-        /// `CancelIo` or `CancelIoEx`.
-        ///
-        /// - Win32: `ERROR_OPERATION_ABORTED`
-        public static let operationAborted: UInt32 = UInt32(ERROR_OPERATION_ABORTED)
+            /// Operation-related error codes.
+            public enum Operation {
+                /// The I/O operation was aborted due to cancellation.
+                ///
+                /// Returned when an overlapped operation is cancelled via
+                /// `CancelIo` or `CancelIoEx`.
+                ///
+                /// - Win32: `ERROR_OPERATION_ABORTED`
+                public static let aborted: UInt32 = UInt32(ERROR_OPERATION_ABORTED)
+            }
 
-        /// The specified operation was not found.
-        ///
-        /// Returned when attempting to cancel an operation that doesn't exist.
-        ///
-        /// - Win32: `ERROR_NOT_FOUND`
-        public static let notFound: UInt32 = UInt32(ERROR_NOT_FOUND)
+            /// Lookup-related error codes.
+            public enum Lookup {
+                /// The specified operation was not found.
+                ///
+                /// Returned when attempting to cancel an operation that doesn't exist.
+                ///
+                /// - Win32: `ERROR_NOT_FOUND`
+                public static let notFound: UInt32 = UInt32(ERROR_NOT_FOUND)
+            }
 
-        /// The wait operation timed out.
-        ///
-        /// Returned by `GetQueuedCompletionStatus[Ex]` when the timeout
-        /// expires without receiving a completion packet.
-        ///
-        /// - Win32: `WAIT_TIMEOUT`
-        public static let waitTimeout: UInt32 = UInt32(bitPattern: WAIT_TIMEOUT)
+            /// Wait-related error codes.
+            public enum Wait {
+                /// The wait operation timed out.
+                ///
+                /// Returned by `GetQueuedCompletionStatus[Ex]` when the timeout
+                /// expires without receiving a completion packet.
+                ///
+                /// - Win32: `WAIT_TIMEOUT`
+                public static let timeout: UInt32 = UInt32(bitPattern: WAIT_TIMEOUT)
 
-        /// Infinite timeout value.
-        ///
-        /// Pass to timeout parameters to wait indefinitely.
-        ///
-        /// - Win32: `INFINITE`
-        public static let infinite: UInt32 = INFINITE
+                /// Infinite timeout value.
+                ///
+                /// Pass to timeout parameters to wait indefinitely.
+                ///
+                /// - Win32: `INFINITE`
+                public static let infinite: UInt32 = INFINITE
+            }
+        }
     }
 
 #endif

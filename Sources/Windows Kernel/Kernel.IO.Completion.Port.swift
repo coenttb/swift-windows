@@ -13,37 +13,37 @@ public import Kernel_Primitives
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel {
-        /// Raw IOCP (I/O Completion Ports) wrappers (Windows only).
+    extension Kernel.IO.Completion {
+        /// Raw I/O Completion Port wrappers (Windows only).
         ///
-        /// IOCP is the high-performance asynchronous I/O interface for Windows.
-        /// This namespace provides policy-free syscall wrappers.
+        /// I/O Completion Ports are the high-performance asynchronous I/O
+        /// interface for Windows. This namespace provides policy-free syscall wrappers.
         ///
         /// Higher layers (swift-io) build registration management,
         /// handle tracking, and event dispatch on top of these primitives.
-        public enum IOCP {
+        public enum Port {
 
         }
     }
 
     // MARK: - Syscalls
 
-    extension Kernel.IOCP {
+    extension Kernel.IO.Completion.Port {
         /// Creates a new I/O completion port.
         ///
-        /// - Parameter concurrentThreads: Maximum number of threads allowed to
+        /// - Parameter threads: Maximum number of threads allowed to
         ///   concurrently process completions. Pass 0 to use the number of CPUs.
-        /// - Returns: The IOCP handle.
+        /// - Returns: The port handle.
         /// - Throws: `Error.create` if creation fails.
         @inlinable
         public static func create(
-            concurrentThreads: UInt32 = 0
+            threads: UInt32 = 0
         ) throws(Error) -> Kernel.Descriptor {
             let handle = CreateIoCompletionPort(
                 INVALID_HANDLE_VALUE,
                 nil,
                 0,
-                DWORD(concurrentThreads)
+                DWORD(threads)
             )
             guard let handle, handle != INVALID_HANDLE_VALUE else {
                 throw .create(.captureLastError())
@@ -56,18 +56,18 @@ public import Kernel_Primitives
         /// The file handle must have been opened with `FILE_FLAG_OVERLAPPED`.
         ///
         /// - Parameters:
-        ///   - port: The IOCP handle.
-        ///   - fileHandle: The file handle to associate.
+        ///   - port: The port handle.
+        ///   - handle: The file handle to associate.
         ///   - key: Application-defined value returned with completions.
         /// - Throws: `Error.associate` if association fails.
         @inlinable
         public static func associate(
             _ port: Kernel.Descriptor,
-            fileHandle: HANDLE,
-            key: Completion.Key
+            handle: HANDLE,
+            key: Key
         ) throws(Error) {
             let result = CreateIoCompletionPort(
-                fileHandle,
+                handle,
                 port.rawValue,
                 key.rawValue,
                 0
@@ -83,21 +83,21 @@ public import Kernel_Primitives
         /// or to manually signal completion of an operation.
         ///
         /// - Parameters:
-        ///   - port: The IOCP handle.
-        ///   - bytesTransferred: Number of bytes to report.
+        ///   - port: The port handle.
+        ///   - bytes: Number of bytes to report.
         ///   - key: The completion key to return.
         ///   - overlapped: The overlapped pointer to return (can be nil).
         /// - Throws: `Error.post` on failure.
         @inlinable
         public static func post(
             _ port: Kernel.Descriptor,
-            bytesTransferred: DWORD = 0,
-            key: Completion.Key = .zero,
+            bytes: DWORD = 0,
+            key: Key = .zero,
             overlapped: LPOVERLAPPED? = nil
         ) throws(Error) {
             let result = PostQueuedCompletionStatus(
                 port.rawValue,
-                bytesTransferred,
+                bytes,
                 key.rawValue,
                 overlapped
             )
@@ -110,7 +110,7 @@ public import Kernel_Primitives
         ///
         /// Uses `Kernel.Close.close()` for consistency. Ignores errors.
         ///
-        /// - Parameter port: The IOCP handle to close.
+        /// - Parameter port: The port handle to close.
         @inlinable
         public static func close(_ port: Kernel.Descriptor) {
             try? Kernel.Close.close(port)
@@ -130,21 +130,21 @@ public import Kernel_Primitives
             into buffer: UnsafeMutableRawBufferPointer,
             overlapped: UnsafeMutablePointer<OVERLAPPED>
         ) throws(Error) -> Read.Result {
-            var bytesRead: DWORD = 0
+            var count: DWORD = 0
             let success = ReadFile(
                 handle,
                 buffer.baseAddress,
                 DWORD(buffer.count),
-                &bytesRead,
+                &count,
                 overlapped
             )
 
             if success {
-                return .completed(bytes: bytesRead)
+                return .completed(bytes: count)
             }
 
             let error = GetLastError()
-            if error == Error.ioPending {
+            if error == Error.Code.io.pending {
                 return .pending
             }
 
@@ -165,21 +165,21 @@ public import Kernel_Primitives
             from buffer: UnsafeRawBufferPointer,
             overlapped: UnsafeMutablePointer<OVERLAPPED>
         ) throws(Error) -> Write.Result {
-            var bytesWritten: DWORD = 0
+            var count: DWORD = 0
             let success = WriteFile(
                 handle,
                 buffer.baseAddress,
                 DWORD(buffer.count),
-                &bytesWritten,
+                &count,
                 overlapped
             )
 
             if success {
-                return .completed(bytes: bytesWritten)
+                return .completed(bytes: count)
             }
 
             let error = GetLastError()
-            if error == Error.ioPending {
+            if error == Error.Code.io.pending {
                 return .pending
             }
 
@@ -200,16 +200,16 @@ public import Kernel_Primitives
             overlapped: UnsafeMutablePointer<OVERLAPPED>,
             wait: Bool = false
         ) throws(Error) -> UInt32 {
-            var bytesTransferred: DWORD = 0
+            var count: DWORD = 0
             let success = GetOverlappedResult(
                 handle,
                 overlapped,
-                &bytesTransferred,
+                &count,
                 wait
             )
 
             if success {
-                return bytesTransferred
+                return count
             }
 
             throw .result(.captureLastError())

@@ -17,22 +17,22 @@
     @testable import Windows_Kernel
     import Kernel_Primitives
 
-    extension Kernel.IOCP {
+    extension Kernel.IO.Completion.Port {
         #TestSuites
     }
 
     // MARK: - API Unit Tests
 
-    extension Kernel.IOCP.Test.Unit {
-        @Test("IOCP namespace exists")
+    extension Kernel.IO.Completion.Port.Test.Unit {
+        @Test("Port namespace exists")
         func namespaceExists() {
-            _ = Kernel.IOCP.self
+            _ = Kernel.IO.Completion.Port.self
         }
 
         @Test("create returns valid descriptor")
         func createReturnsValidDescriptor() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             #expect(port.rawValue != INVALID_HANDLE_VALUE)
         }
@@ -40,110 +40,110 @@
         @Test("create with concurrency parameter")
         func createWithConcurrency() throws {
             // Create port with specific thread count
-            let port = try Kernel.IOCP.create(concurrentThreads: 4)
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create(threads: 4)
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             #expect(port.rawValue != INVALID_HANDLE_VALUE)
         }
 
         @Test("create multiple ports are independent")
         func createMultiplePorts() throws {
-            let port1 = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port1) }
+            let port1 = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port1) }
 
-            let port2 = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port2) }
+            let port2 = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port2) }
 
             #expect(port1.rawValue != port2.rawValue)
         }
 
         @Test("close completes without error")
         func closeCompletesWithoutError() throws {
-            let port = try Kernel.IOCP.create()
-            Kernel.IOCP.close(port)
+            let port = try Kernel.IO.Completion.Port.create()
+            Kernel.IO.Completion.Port.close(port)
             // No throw means success
         }
     }
 
     // MARK: - Post and Dequeue Tests
 
-    extension Kernel.IOCP.Test.Unit {
+    extension Kernel.IO.Completion.Port.Test.Unit {
         @Test("post completion to port")
         func postCompletion() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             // Post a completion packet
-            try Kernel.IOCP.post(
+            try Kernel.IO.Completion.Port.post(
                 port,
-                bytesTransferred: 42,
-                key: Kernel.IOCP.Completion.Key(123)
+                bytes: 42,
+                key: Kernel.IO.Completion.Port.Key(123)
             )
         }
 
         @Test("post and dequeue single completion")
         func postAndDequeueSingle() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
-            let expectedBytes: DWORD = 100
-            let expectedKey = Kernel.IOCP.Completion.Key(456)
+            let expected: DWORD = 100
+            let expectedKey = Kernel.IO.Completion.Port.Key(456)
 
             // Post a completion
-            try Kernel.IOCP.post(
+            try Kernel.IO.Completion.Port.post(
                 port,
-                bytesTransferred: expectedBytes,
+                bytes: expected,
                 key: expectedKey
             )
 
             // Dequeue it
-            let result = try Kernel.IOCP.Dequeue.single(port, timeout: 1000)
+            let result = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 1000)
 
-            #expect(result.bytesTransferred == expectedBytes)
+            #expect(result.bytes == expected)
             #expect(result.key == expectedKey)
             #expect(result.overlapped == nil)
         }
 
         @Test("post multiple completions and dequeue in order")
         func postMultipleAndDequeue() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             // Post multiple completions
             for i: DWORD in 0..<5 {
-                try Kernel.IOCP.post(
+                try Kernel.IO.Completion.Port.post(
                     port,
-                    bytesTransferred: i * 10,
-                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
+                    bytes: i * 10,
+                    key: Kernel.IO.Completion.Port.Key(ULONG_PTR(i))
                 )
             }
 
             // Dequeue all (FIFO order)
             for i: DWORD in 0..<5 {
-                let result = try Kernel.IOCP.Dequeue.single(port, timeout: 1000)
-                #expect(result.bytesTransferred == i * 10)
+                let result = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 1000)
+                #expect(result.bytes == i * 10)
                 #expect(result.key.rawValue == ULONG_PTR(i))
             }
         }
 
         @Test("dequeue times out when no completions")
         func dequeueTimesOut() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             // Try to dequeue with a short timeout (should timeout)
-            #expect(throws: Kernel.IOCP.Error.self) {
-                _ = try Kernel.IOCP.Dequeue.single(port, timeout: 10)
+            #expect(throws: Kernel.IO.Completion.Port.Error.self) {
+                _ = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 10)
             }
         }
 
         @Test("dequeue timeout throws correct error")
         func dequeueTimeoutCorrectError() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             do {
-                _ = try Kernel.IOCP.Dequeue.single(port, timeout: 10)
+                _ = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 10)
                 Issue.record("Expected timeout error")
             } catch {
                 if case .timeout = error {
@@ -157,15 +157,15 @@
 
     // MARK: - Batch Dequeue Tests
 
-    extension Kernel.IOCP.Test.Unit {
+    extension Kernel.IO.Completion.Port.Test.Unit {
         @Test("batch dequeue returns zero on timeout")
         func batchDequeueTimesOut() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             var entries = [OVERLAPPED_ENTRY](repeating: OVERLAPPED_ENTRY(), count: 10)
             let count = try entries.withUnsafeMutableBufferPointer { buffer in
-                try Kernel.IOCP.Dequeue.batch(port, entries: buffer, timeout: 10)
+                try Kernel.IO.Completion.Port.Dequeue.batch(port, entries: buffer, timeout: 10)
             }
 
             #expect(count == 0)
@@ -173,24 +173,24 @@
 
         @Test("batch dequeue retrieves multiple completions")
         func batchDequeueMultiple() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             let postCount = 5
 
             // Post multiple completions
             for i in 0..<postCount {
-                try Kernel.IOCP.post(
+                try Kernel.IO.Completion.Port.post(
                     port,
-                    bytesTransferred: DWORD(i * 10),
-                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
+                    bytes: DWORD(i * 10),
+                    key: Kernel.IO.Completion.Port.Key(ULONG_PTR(i))
                 )
             }
 
             // Batch dequeue
             var entries = [OVERLAPPED_ENTRY](repeating: OVERLAPPED_ENTRY(), count: 10)
             let count = try entries.withUnsafeMutableBufferPointer { buffer in
-                try Kernel.IOCP.Dequeue.batch(port, entries: buffer, timeout: 1000)
+                try Kernel.IO.Completion.Port.Dequeue.batch(port, entries: buffer, timeout: 1000)
             }
 
             #expect(count == postCount)
@@ -204,22 +204,22 @@
 
         @Test("batch dequeue with smaller buffer than completions")
         func batchDequeuePartial() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
             // Post 10 completions
             for i in 0..<10 {
-                try Kernel.IOCP.post(
+                try Kernel.IO.Completion.Port.post(
                     port,
-                    bytesTransferred: DWORD(i),
-                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
+                    bytes: DWORD(i),
+                    key: Kernel.IO.Completion.Port.Key(ULONG_PTR(i))
                 )
             }
 
             // Batch dequeue with buffer of 3
             var entries = [OVERLAPPED_ENTRY](repeating: OVERLAPPED_ENTRY(), count: 3)
             let count = try entries.withUnsafeMutableBufferPointer { buffer in
-                try Kernel.IOCP.Dequeue.batch(port, entries: buffer, timeout: 1000)
+                try Kernel.IO.Completion.Port.Dequeue.batch(port, entries: buffer, timeout: 1000)
             }
 
             #expect(count <= 3)
@@ -229,79 +229,79 @@
 
     // MARK: - Nested Types Tests
 
-    extension Kernel.IOCP.Test.Unit {
+    extension Kernel.IO.Completion.Port.Test.Unit {
         @Test("Error type exists")
         func errorTypeExists() {
-            let _: Kernel.IOCP.Error.Type = Kernel.IOCP.Error.self
-        }
-
-        @Test("Completion type exists")
-        func completionTypeExists() {
-            let _: Kernel.IOCP.Completion.Type = Kernel.IOCP.Completion.self
+            let _: Kernel.IO.Completion.Port.Error.Type = Kernel.IO.Completion.Port.Error.self
         }
 
         @Test("Entry type exists")
         func entryTypeExists() {
-            let _: Kernel.IOCP.Entry.Type = Kernel.IOCP.Entry.self
+            let _: Kernel.IO.Completion.Port.Entry.Type = Kernel.IO.Completion.Port.Entry.self
         }
 
         @Test("Overlapped type exists")
         func overlappedTypeExists() {
-            let _: Kernel.IOCP.Overlapped.Type = Kernel.IOCP.Overlapped.self
+            let _: Kernel.IO.Completion.Port.Overlapped.Type = Kernel.IO.Completion.Port.Overlapped.self
         }
 
         @Test("Dequeue type exists")
         func dequeueTypeExists() {
-            let _: Kernel.IOCP.Dequeue.Type = Kernel.IOCP.Dequeue.self
+            let _: Kernel.IO.Completion.Port.Dequeue.Type = Kernel.IO.Completion.Port.Dequeue.self
         }
 
         @Test("Cancel type exists")
         func cancelTypeExists() {
-            let _: Kernel.IOCP.Cancel.Type = Kernel.IOCP.Cancel.self
+            let _: Kernel.IO.Completion.Port.Cancel.Type = Kernel.IO.Completion.Port.Cancel.self
+        }
+
+        @Test("Key type exists")
+        func keyTypeExists() {
+            let _: Kernel.IO.Completion.Port.Key.Type = Kernel.IO.Completion.Port.Key.self
         }
 
         @Test("Read.Result type exists")
         func readResultTypeExists() {
-            let _: Kernel.IOCP.Read.Result.Type = Kernel.IOCP.Read.Result.self
+            let _: Kernel.IO.Completion.Port.Read.Result.Type = Kernel.IO.Completion.Port.Read.Result.self
         }
 
         @Test("Write.Result type exists")
         func writeResultTypeExists() {
-            let _: Kernel.IOCP.Write.Result.Type = Kernel.IOCP.Write.Result.self
+            let _: Kernel.IO.Completion.Port.Write.Result.Type = Kernel.IO.Completion.Port.Write.Result.self
         }
     }
 
     // MARK: - Edge Cases
 
-    extension Kernel.IOCP.Test.EdgeCase {
+    extension Kernel.IO.Completion.Port.Test.EdgeCase {
         @Test("post with zero bytes")
         func postZeroBytes() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
-            try Kernel.IOCP.post(port, bytesTransferred: 0)
+            try Kernel.IO.Completion.Port.post(port, bytes: 0)
 
-            let result = try Kernel.IOCP.Dequeue.single(port, timeout: 1000)
-            #expect(result.bytesTransferred == 0)
+            let result = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 1000)
+            #expect(result.bytes == 0)
         }
 
         @Test("post with maximum key value")
         func postMaxKey() throws {
-            let port = try Kernel.IOCP.create()
-            defer { Kernel.IOCP.close(port) }
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
 
-            let maxKey = Kernel.IOCP.Completion.Key(rawValue: ULONG_PTR.max)
-            try Kernel.IOCP.post(port, key: maxKey)
+            let maxKey = Kernel.IO.Completion.Port.Key(rawValue: ULONG_PTR.max)
+            try Kernel.IO.Completion.Port.post(port, key: maxKey)
 
-            let result = try Kernel.IOCP.Dequeue.single(port, timeout: 1000)
+            let result = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 1000)
             #expect(result.key == maxKey)
         }
 
         @Test("create and immediately close")
         func createAndImmediatelyClose() throws {
             for _ in 0..<100 {
-                let port = try Kernel.IOCP.create()
-                Kernel.IOCP.close(port)
+                let port = try Kernel.IO.Completion.Port.create()
+                Kernel.IO.Completion.Port.close(port)
             }
         }
     }

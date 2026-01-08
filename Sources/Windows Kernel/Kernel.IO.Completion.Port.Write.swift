@@ -12,12 +12,12 @@ public import Kernel_Primitives
 
 #if os(Windows)
 
-    extension Kernel.IOCP {
+    extension Kernel.IO.Completion.Port {
         /// Namespace for write operation types.
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP/Write/Result``
+        /// - ``Kernel/IO/Completion/Port/Write/Result``
         public enum Write {}
     }
 

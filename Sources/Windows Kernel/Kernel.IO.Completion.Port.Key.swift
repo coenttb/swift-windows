@@ -13,11 +13,11 @@ public import Kernel_Primitives
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.IOCP.Completion {
+    extension Kernel.IO.Completion.Port {
         /// Completion key for routing I/O completions to handlers.
         ///
         /// The completion key is an application-defined value associated with
-        /// a file handle when it's registered with an IOCP. When a completion
+        /// a file handle when it's registered with a port. When a completion
         /// arrives, the key identifies which handle completed the operation.
         ///
         /// ## Common Patterns
@@ -25,8 +25,8 @@ public import Kernel_Primitives
         /// **Index-based:** Use small integers to index into an array of handlers:
         /// ```swift
         /// let handlers: [Handler] = ...
-        /// let key = Kernel.IOCP.Completion.Key(UInt(handlerIndex))
-        /// try Kernel.IOCP.associate(port, handle: fileHandle, key: key)
+        /// let key = Kernel.IO.Completion.Port.Key(UInt(index))
+        /// try Kernel.IO.Completion.Port.associate(port, handle: handle, key: key)
         ///
         /// // On completion:
         /// let handler = handlers[Int(entry.key.rawValue)]
@@ -36,8 +36,8 @@ public import Kernel_Primitives
         /// ```swift
         /// let context = UnsafeMutablePointer<MyContext>.allocate(capacity: 1)
         /// context.initialize(to: MyContext(...))
-        /// let key = Kernel.IOCP.Completion.Key(pointer: context)
-        /// try Kernel.IOCP.associate(port, handle: fileHandle, key: key)
+        /// let key = Kernel.IO.Completion.Port.Key(pointer: context)
+        /// try Kernel.IO.Completion.Port.associate(port, handle: handle, key: key)
         ///
         /// // On completion:
         /// let context = UnsafeMutablePointer<MyContext>(
@@ -47,8 +47,8 @@ public import Kernel_Primitives
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP``
-        /// - ``Kernel/IOCP/Entry``
+        /// - ``Kernel/IO/Completion/Port``
+        /// - ``Kernel/IO/Completion/Port/Entry``
         public struct Key: RawRepresentable, Sendable, Equatable, Hashable {
             public let rawValue: ULONG_PTR
 
@@ -61,7 +61,7 @@ public import Kernel_Primitives
 
     // MARK: - Pointer Conversions
 
-    extension Kernel.IOCP.Completion.Key {
+    extension Kernel.IO.Completion.Port.Key {
         /// Creates a completion key from an integer identifier.
         ///
         /// - Parameter id: An integer identifier for the key.
@@ -100,14 +100,14 @@ public import Kernel_Primitives
 
     // MARK: - Common Values
 
-    extension Kernel.IOCP.Completion.Key {
+    extension Kernel.IO.Completion.Port.Key {
         /// Zero completion key.
         public static let zero = Self(rawValue: 0)
     }
 
     // MARK: - ExpressibleByIntegerLiteral
 
-    extension Kernel.IOCP.Completion.Key: ExpressibleByIntegerLiteral {
+    extension Kernel.IO.Completion.Port.Key: ExpressibleByIntegerLiteral {
         @inlinable
         public init(integerLiteral value: UInt) {
             self.init(rawValue: ULONG_PTR(value))

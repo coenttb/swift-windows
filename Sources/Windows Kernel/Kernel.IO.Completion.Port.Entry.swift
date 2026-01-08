@@ -13,7 +13,7 @@ public import Kernel_Primitives
 #if os(Windows)
     public import WinSDK
 
-    extension Kernel.IOCP {
+    extension Kernel.IO.Completion.Port {
         /// A completion entry returned by the I/O completion port.
         ///
         /// Represents a single completed I/O operation. When dequeuing completions
@@ -23,8 +23,8 @@ public import Kernel_Primitives
         /// ## Usage
         ///
         /// ```swift
-        /// var entries = [Kernel.IOCP.Entry](repeating: .init(), count: 64)
-        /// let count = try Kernel.IOCP.dequeue(
+        /// var entries = [Kernel.IO.Completion.Port.Entry](repeating: .init(), count: 64)
+        /// let count = try Kernel.IO.Completion.Port.Dequeue.batch(
         ///     port,
         ///     entries: &entries,
         ///     timeout: .milliseconds(100)
@@ -33,16 +33,16 @@ public import Kernel_Primitives
         /// for i in 0..<count {
         ///     let entry = entries[i]
         ///     let key = entry.key
-        ///     let bytesTransferred = entry.bytes.transferred
+        ///     let transferred = entry.bytes.transferred
         ///     // Dispatch to handler based on key
         /// }
         /// ```
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP``
-        /// - ``Kernel/IOCP/Completion/Key``
-        /// - ``Kernel/IOCP/Overlapped``
+        /// - ``Kernel/IO/Completion/Port``
+        /// - ``Kernel/IO/Completion/Port/Key``
+        /// - ``Kernel/IO/Completion/Port/Overlapped``
         public struct Entry: @unchecked Sendable {
             /// The underlying Windows OVERLAPPED_ENTRY structure.
             @usableFromInline
@@ -58,7 +58,7 @@ public import Kernel_Primitives
 
     // MARK: - Accessors
 
-    extension Kernel.IOCP.Entry {
+    extension Kernel.IO.Completion.Port.Entry {
         /// Pointer to the OVERLAPPED structure for this completion.
         @inlinable
         internal var overlapped: UnsafeMutablePointer<OVERLAPPED>? {
@@ -67,33 +67,16 @@ public import Kernel_Primitives
 
         /// The completion key associated with the file handle.
         @inlinable
-        public var key: Kernel.IOCP.Completion.Key {
-            Kernel.IOCP.Completion.Key(rawValue: raw.lpCompletionKey)
+        public var key: Kernel.IO.Completion.Port.Key {
+            Kernel.IO.Completion.Port.Key(rawValue: raw.lpCompletionKey)
         }
     }
 
     // MARK: - Bytes Accessor
 
-    extension Kernel.IOCP.Entry {
+    extension Kernel.IO.Completion.Port.Entry {
         /// Accessor for byte-related properties.
         public var bytes: Bytes { Bytes(entry: self) }
-
-        /// Byte-related properties for completion entry.
-        public struct Bytes: Sendable {
-            @usableFromInline
-            let entry: Kernel.IOCP.Entry
-
-            @usableFromInline
-            init(entry: Kernel.IOCP.Entry) {
-                self.entry = entry
-            }
-
-            /// Number of bytes transferred in the completed operation.
-            @inlinable
-            public var transferred: Kernel.File.Size {
-                Kernel.File.Size(Int64(entry.raw.dwNumberOfBytesTransferred))
-            }
-        }
     }
 
 #endif

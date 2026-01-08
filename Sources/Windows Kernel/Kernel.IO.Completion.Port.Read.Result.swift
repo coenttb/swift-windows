@@ -12,42 +12,42 @@ public import Kernel_Primitives
 
 #if os(Windows)
 
-    extension Kernel.IOCP.Write {
-        /// Result of initiating an overlapped write operation.
+    extension Kernel.IO.Completion.Port.Read {
+        /// Result of initiating an overlapped read operation.
         ///
         /// Windows overlapped I/O can complete either synchronously (immediately)
-        /// or asynchronously (later via IOCP). This enum distinguishes the two cases.
+        /// or asynchronously (later via the port). This enum distinguishes the two cases.
         ///
         /// ## Usage
         ///
         /// ```swift
-        /// let result = try Kernel.IOCP.write(handle, from: buffer, overlapped: &overlapped)
+        /// let result = try Kernel.IO.Completion.Port.read(handle, into: buffer, overlapped: &overlapped)
         /// switch result {
         /// case .pending:
-        ///     // Wait for completion via IOCP
-        ///     let entry = try Kernel.IOCP.Dequeue.single(port, timeout: INFINITE)
-        ///     let bytesWritten = entry.0
+        ///     // Wait for completion via port
+        ///     let entry = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: INFINITE)
+        ///     let count = entry.0
         /// case .completed(let bytes):
-        ///     // Completed immediately, no IOCP notification
-        ///     print("Wrote \(bytes) bytes synchronously")
+        ///     // Completed immediately, no port notification
+        ///     processData(buffer.prefix(Int(bytes)))
         /// }
         /// ```
         ///
         /// ## See Also
         ///
-        /// - ``Kernel/IOCP/Read/Result``
-        /// - ``Kernel/IOCP/write(_:from:overlapped:)``
+        /// - ``Kernel/IO/Completion/Port/Write/Result``
+        /// - ``Kernel/IO/Completion/Port/read(_:into:overlapped:)``
         public enum Result: Sendable, Equatable {
             /// The operation is pending asynchronously.
             ///
-            /// A completion packet will be posted to the IOCP when the
-            /// operation finishes.
+            /// A completion packet will be posted to the port when the
+            /// operation finishes. Do not access the buffer until then.
             case pending
 
             /// The operation completed synchronously.
             ///
-            /// No completion packet will be posted to the IOCP. The data
-            /// has already been written.
+            /// No completion packet will be posted to the port. The data
+            /// is immediately available in the buffer.
             case completed(bytes: UInt32)
         }
     }
