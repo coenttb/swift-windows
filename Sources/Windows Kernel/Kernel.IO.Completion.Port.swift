@@ -21,6 +21,15 @@ public import Kernel_Primitives
         ///
         /// Higher layers (swift-io) build registration management,
         /// handle tracking, and event dispatch on top of these primitives.
+        ///
+        /// ## Threading
+        ///
+        /// All operations in this namespace are **synchronous syscall wrappers**.
+        /// They execute on the calling thread and return when the syscall completes.
+        ///
+        /// - `create`, `associate`, `post`, `close`: Non-blocking syscalls
+        /// - `read`, `write`: Initiate async I/O, return immediately (`.pending` or `.completed`)
+        /// - `Dequeue.single`, `Dequeue.batch`: **Block** until completion arrives or timeout expires
         public enum Port {
 
         }
@@ -108,7 +117,9 @@ public import Kernel_Primitives
 
         /// Closes the completion port.
         ///
-        /// Uses `Kernel.Close.close()` for consistency. Ignores errors.
+        /// Uses `Kernel.Close.close()` for consistency. This operation is
+        /// **fire-and-forget**: errors are ignored. Any threads blocked in
+        /// `Dequeue` will receive an error on their next dequeue attempt.
         ///
         /// - Parameter port: The port handle to close.
         @inlinable

@@ -110,6 +110,9 @@ public import Kernel_Primitives
     extension Kernel.IO.Completion.Port.Dequeue {
         /// Dequeues a single completion packet.
         ///
+        /// - Note: This operation **blocks the calling thread** until a completion
+        ///   arrives or the timeout expires. For non-blocking polling, use `timeout: 0`.
+        ///
         /// - Parameters:
         ///   - port: The port handle.
         ///   - timeout: Timeout in milliseconds (`INFINITE` = 0xFFFFFFFF).
@@ -166,6 +169,9 @@ public import Kernel_Primitives
         ///
         /// More efficient than calling `single` in a loop when multiple
         /// completions are expected.
+        ///
+        /// - Note: This operation **blocks the calling thread** until at least one
+        ///   completion arrives or the timeout expires. For non-blocking polling, use `timeout: 0`.
         ///
         /// - Parameters:
         ///   - port: The port handle.
