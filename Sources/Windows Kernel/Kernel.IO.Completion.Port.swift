@@ -144,7 +144,7 @@ public import Kernel_Primitives
             }
 
             let error = GetLastError()
-            if error == Error.Code.io.pending {
+            if error == Error.Code.IO.pending {
                 return .pending
             }
 
@@ -179,7 +179,7 @@ public import Kernel_Primitives
             }
 
             let error = GetLastError()
-            if error == Error.Code.io.pending {
+            if error == Error.Code.IO.pending {
                 return .pending
             }
 

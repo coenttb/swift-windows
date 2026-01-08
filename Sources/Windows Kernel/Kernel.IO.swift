@@ -11,14 +11,6 @@
 
 public import Kernel_Primitives
 
-#if os(Windows)
-
-    extension Kernel {
-        /// I/O operations namespace.
-        ///
-        /// Contains types for asynchronous I/O on Windows, including
-        /// completion ports and related mechanisms.
-        public enum IO {}
-    }
-
-#endif
+// Kernel.IO is defined in Kernel_Primitives.
+// This file extends it with Windows-specific Completion namespace.
+// The actual extension is in Kernel.IO.Completion.swift
