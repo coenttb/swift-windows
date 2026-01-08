@@ -114,7 +114,7 @@
                 try Kernel.IOCP.post(
                     port,
                     bytesTransferred: i * 10,
-                    key: Kernel.IOCP.Completion.Key(UInt(i))
+                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
                 )
             }
 
@@ -183,7 +183,7 @@
                 try Kernel.IOCP.post(
                     port,
                     bytesTransferred: DWORD(i * 10),
-                    key: Kernel.IOCP.Completion.Key(UInt(i))
+                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
                 )
             }
 
@@ -212,7 +212,7 @@
                 try Kernel.IOCP.post(
                     port,
                     bytesTransferred: DWORD(i),
-                    key: Kernel.IOCP.Completion.Key(UInt(i))
+                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
                 )
             }
 

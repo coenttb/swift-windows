@@ -79,7 +79,7 @@
 
             // Post in specific order
             for i: DWORD in 1...5 {
-                try Kernel.IOCP.post(port, bytesTransferred: i * 100, key: Kernel.IOCP.Completion.Key(UInt(i)))
+                try Kernel.IOCP.post(port, bytesTransferred: i * 100, key: Kernel.IOCP.Completion.Key(ULONG_PTR(i)))
             }
 
             // Dequeue and verify FIFO order
@@ -137,7 +137,7 @@
                 try Kernel.IOCP.post(
                     port,
                     bytesTransferred: DWORD(i * 10),
-                    key: Kernel.IOCP.Completion.Key(UInt(i))
+                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
                 )
             }
 
@@ -166,7 +166,7 @@
                 try Kernel.IOCP.post(
                     port,
                     bytesTransferred: DWORD(i),
-                    key: Kernel.IOCP.Completion.Key(UInt(i))
+                    key: Kernel.IOCP.Completion.Key(ULONG_PTR(i))
                 )
             }
 
@@ -199,7 +199,7 @@
 
             // Post 10 completions
             for i in 0..<10 {
-                try Kernel.IOCP.post(port, key: Kernel.IOCP.Completion.Key(UInt(i)))
+                try Kernel.IOCP.post(port, key: Kernel.IOCP.Completion.Key(ULONG_PTR(i)))
             }
 
             var totalDequeued = 0
@@ -246,7 +246,7 @@
 
             // Post some completions
             for i in 0..<3 {
-                try Kernel.IOCP.post(port, key: Kernel.IOCP.Completion.Key(UInt(i)))
+                try Kernel.IOCP.post(port, key: Kernel.IOCP.Completion.Key(ULONG_PTR(i)))
             }
 
             var entries = [OVERLAPPED_ENTRY](repeating: OVERLAPPED_ENTRY(), count: 10)

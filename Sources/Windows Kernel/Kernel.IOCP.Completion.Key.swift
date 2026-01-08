@@ -70,14 +70,6 @@ public import Kernel_Primitives
             self.init(rawValue: id)
         }
 
-        /// Creates a completion key from a UInt value.
-        ///
-        /// - Parameter id: A UInt identifier for the key.
-        @inlinable
-        public init(_ id: UInt) {
-            self.init(rawValue: ULONG_PTR(id))
-        }
-
         /// Creates a completion key from a raw pointer.
         ///
         /// This is useful when you want to associate a context object
