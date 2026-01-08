@@ -4,6 +4,12 @@ import PackageDescription
 
 let package = Package(
     name: "swift-windows",
+    platforms: [
+        .macOS(.v26),
+        .iOS(.v26),
+        .tvOS(.v26),
+        .watchOS(.v26)
+    ],
     products: [
         .library(
             name: "Windows Primitives",
@@ -15,7 +21,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/coenttb/swift-kernel-primitives.git", from: "0.1.0"),
+        .package(url: "https://github.com/coenttb/swift-kernel-primitives.git", from: "0.2.2"),
         .package(url: "https://github.com/swift-standards/swift-standards.git", from: "0.29.0")
     ],
     targets: [
