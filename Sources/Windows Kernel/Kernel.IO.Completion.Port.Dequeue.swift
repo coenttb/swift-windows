@@ -68,6 +68,11 @@ public import Kernel_Primitives
 
     extension Kernel.IO.Completion.Port.Dequeue {
         /// A dequeued I/O completion.
+        ///
+        /// - Important: `overlapped` is a raw pointer and is not memory-safe by itself.
+        ///   The associated `OVERLAPPED` storage must remain valid until the completion
+        ///   is fully processed. This type is `@unchecked Sendable` for IOCP usage; callers
+        ///   must ensure correct lifetime and synchronization of the pointed-to storage.
         @frozen
         public struct Item: @unchecked Sendable {
             /// Number of bytes transferred.

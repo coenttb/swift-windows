@@ -87,6 +87,40 @@
                 #expect(Bool(false), "Expected operationError status")
             }
         }
+
+        @Test("single throws .timeout on timeout")
+        func singleTimeout() throws {
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
+
+            do {
+                _ = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 0)
+                #expect(Bool(false), "Expected .timeout")
+            } catch let e as Kernel.IO.Completion.Port.Error {
+                #expect(e == .timeout)
+            }
+        }
+
+        @Test("single returns .ok for posted completion")
+        func singlePostedCompletion() throws {
+            let port = try Kernel.IO.Completion.Port.create()
+            defer { Kernel.IO.Completion.Port.close(port) }
+
+            let ov = UnsafeMutablePointer<OVERLAPPED>.allocate(capacity: 1)
+            ov.initialize(to: OVERLAPPED())
+            defer {
+                ov.deinitialize(count: 1)
+                ov.deallocate()
+            }
+
+            try Kernel.IO.Completion.Port.post(port, bytes: 7, key: .init(rawValue: 1), overlapped: ov)
+
+            let item = try Kernel.IO.Completion.Port.Dequeue.single(port, timeout: 1_000)
+            #expect(item.bytes == 7)
+            #expect(item.key == .init(rawValue: 1))
+            #expect(item.overlapped == ov)
+            #expect(item.status == .ok)
+        }
     }
 
 #endif
