@@ -9,8 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
-
 // Kernel.IO is defined in Kernel_Primitives.
 // This file extends it with Windows-specific Completion namespace.
 // The actual extension is in Kernel.IO.Completion.swift

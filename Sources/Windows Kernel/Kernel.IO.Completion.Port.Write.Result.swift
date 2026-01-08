@@ -8,9 +8,9 @@
 // See LICENSE for license information
 //
 // ===----------------------------------------------------------------------===//
-public import Kernel_Primitives
 
 #if os(Windows)
+public import Kernel_Primitives
 
     extension Kernel.IO.Completion.Port.Write {
         /// Result of initiating an overlapped write operation.

@@ -9,9 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Kernel_Primitives
-
 #if os(Windows)
+public import Kernel_Primitives
 
     extension Kernel.IO {
         /// Completion-related types for asynchronous I/O.
